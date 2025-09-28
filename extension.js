@@ -136,8 +136,10 @@ export default class IdeapadControlsExtension extends Extension {
             status = writeStringToFile(destinationValue, destinationFile);
         }                
 
-        if (status && this.settings.get_boolean('send-success-notifications')) {
-            notify(_("Ideapad Controls"), notificationBody);
+        if (status) {
+            if (this.settings.get_boolean('send-success-notifications')) {
+                notify(_("Ideapad Controls"), notificationBody);
+            }
         } else {
             notify(_("Ideapad Controls"), _("Failed to enable %s").format(_(getOptionName(optionFile))));
         }
