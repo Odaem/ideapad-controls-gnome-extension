@@ -4,7 +4,7 @@ TMPFILES_CONF := 99-ideapad.conf
 subprojects:
 	@git submodule update --resursive
 
-template.ui: subprojects
+template.ui: subprojects template.blp
 	@./subprojects/blueprint-compiler/blueprint-compiler.py compile template.blp > template.ui
 
 $(EXTENSION_ZIP): template.ui
