@@ -83,9 +83,15 @@ export default class IdeapadControlsExtension extends Extension {
                 Gio.SettingsBindFlags.DEFAULT
             );
 
-            optionSwitch.connect('toggled', () => {
-                this.getOptionValue(sysfsPath, this.supportedOptions[i]);
-                this.setOptionValue(sysfsPath, this.supportedOptions[i], optionSwitch.state);
+            optionSwitch.connect('toggled', (obj, state) => {
+                const realState = this.getOptionValue(sysfsPath, this.supportedOptions[i]) === '1';
+                if (state !== realState) {
+                    this.setOptionValue(sysfsPath, this.supportedOptions[i], state).then((success) => {
+                        if (!success) {
+                            obj.state = realState;
+                        }
+                    });
+                }
             });
         }
 
@@ -164,6 +170,8 @@ export default class IdeapadControlsExtension extends Extension {
         } else {
             notify(_("Ideapad Controls"), _("Failed to enable %s").format(_(getOptionName(optionFile))));
         }
+
+        return status;
     }
 }
 
