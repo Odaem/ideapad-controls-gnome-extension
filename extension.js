@@ -109,9 +109,16 @@ export default class IdeapadControlsExtension extends Extension {
     // Read option value from driver file.
     getOptionValue(sysfsPath, optionFile) {
         const file = Gio.File.new_for_path(sysfsPath + optionFile);
-        const [success, contents] = file.load_contents(null);
-        if (!success) {
-            console.error(`Can't write ${optionFile}`);
+        let contents;
+        try {
+            let success;
+            [success, contents] = file.load_contents(null);
+            if (!success) {
+                console.error(`Could not read ${optionFile}`);
+                return '0';
+            }
+        } catch (e) {
+            console.error(`Could not read ${optionFile}: ${e}`);
             return '0';
         }
 
