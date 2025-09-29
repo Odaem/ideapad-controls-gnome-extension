@@ -1,5 +1,4 @@
 import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
 
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import {panel, notify} from 'resource:///org/gnome/shell/ui/main.js';
@@ -123,18 +122,33 @@ export default class IdeapadControlsExtension extends Extension {
     }
 
     // Write option value to driver file.
-    setOptionValue(sysfsPath, optionFile, value) {
+    async setOptionValue(sysfsPath, optionFile, value) {
         const notificationBody = `${(value === true ? _('Enabled %s') : _('Disabled %s')).format(_(getOptionName(optionFile)))}`;
         const destinationValue = value ? '1' : '0';
         const destinationFile = sysfsPath + optionFile;
         let status = true;
 
         if (this.settings.get_boolean('use-pkexec')) {
-            status = GLib.spawn_command_line_async(`pkexec bash -c 'echo ${destinationValue} > ${destinationFile}'`);
+            let escaped = destinationFile.replaceAll("/'/g", "'\\''");
+            try {
+                const proc = Gio.Subprocess.new(['pkexec', 'bash', '-c', `echo ${destinationValue} > '${escaped}'`], Gio.Subprocess.None);
+                status = await new Promise((resolve, reject) => {
+                    proc.wait_check_async(null, (_proc, result, _data) => {
+                        try {
+                            resolve(_proc.wait_check_finish(result));
+                        } catch (e) {
+                            reject(e);
+                        }
+                    });
+                });
+            } catch (e) {
+                console.error(`Could not write to file ${destinationFile}: ${e}`);
+                status = false;
+            }
         } else {
             console.log(`Writing string to file ${destinationValue} ${destinationFile}`);
-            status = writeStringToFile(destinationValue, destinationFile);
-        }                
+            status = await writeStringToFile(destinationValue, destinationFile);
+        }
 
         if (status) {
             if (this.settings.get_boolean('send-success-notifications')) {
