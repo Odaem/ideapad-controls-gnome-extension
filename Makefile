@@ -39,6 +39,6 @@ tmpfiles-install: $(TMPFILES_CONF)
 clean:
 	rm -f $(EXTENSION_ZIP) template.ui
 
-all: install
+all: extension_zip
 extension_zip: $(EXTENSION_ZIP)
 
